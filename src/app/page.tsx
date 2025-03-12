@@ -15,19 +15,25 @@ import Icon10 from "./image/icon10.svg";
 import Icon11 from "./image/icon11.svg";
 import Icon12 from "./image/icon12.svg";
 import Icon13 from "./image/icon13.svg";
+import Pinn from "./image/Pinn.svg";
 import ArrowUp from "./image/Arrow_up.svg";
 import ArrowDown from "./image/Arrow_down.svg";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState(2); 
-  const [showDropdown, setShowDropdown] = useState(false); 
-  const [tabsToShow, setTabsToShow] = useState<number[]>([]); 
-  const [extraTabs, setExtraTabs] = useState<number[]>([]); 
-  const tabsContainerRef = useRef<HTMLDivElement | null>(null); 
+  const [activeTab, setActiveTab] = useState(2);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [tabsToShow, setTabsToShow] = useState<number[]>([]);
+  const [extraTabs, setExtraTabs] = useState<number[]>([]);
+  const [pinnedTabs, setPinnedTabs] = useState<number[]>([1]); // Початково закріплюємо перший таб
+  const [showContextMenu, setShowContextMenu] = useState<boolean>(false);
+  const [contextMenuTabId, setContextMenuTabId] = useState<number | null>(null);
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  const tabsContainerRef = useRef<HTMLDivElement | null>(null);
 
   const router = useRouter();
 
-  const tabsData = [
+  const [tabsData, setTabsData] = useState([
     { id: 1, name: 'Lagerverwaltung', icon: Icon1, url: '/Lagerverwaltung' },
     { id: 2, name: 'Dashboard', icon: Icon2, url: '/Dashboard' },
     { id: 3, name: 'Banking', icon: Icon3, url: '/Banking' },
@@ -41,19 +47,52 @@ export default function Home() {
     { id: 11, name: 'Warenbestand', icon: Icon11, url: '/Warenbestand' },
     { id: 12, name: 'Auswahllisten', icon: Icon12, url: '/Auswahllisten' },
     { id: 13, name: 'Einkauf', icon: Icon13, url: '/Einkauf' },
-    { id: 14, name: 'Rechn', icon: Icon1, url: '/Rechn' },
-  ];
+  ]);
+
 
   const handleTabClick = (id: number, url: string) => {
     setActiveTab(id);
     router.push(url);
   };
 
+  const handleRightClick = (e: React.MouseEvent, tabId: number) => {
+    e.preventDefault();
+    setContextMenuTabId(tabId);
+    setShowContextMenu(true);
+
+
+    const mouseEvent = e.nativeEvent as MouseEvent;
+    const { clientX, clientY } = mouseEvent;
+
+
+    setContextMenuPosition({ top: clientY, left: clientX });
+  };
+
+  const handlePinTab = () => {
+    if (contextMenuTabId !== null) {
+      const updatedPinnedTabs = [...pinnedTabs];
+
+      // Додаємо таб до закріплених, якщо його ще немає
+      if (!updatedPinnedTabs.includes(contextMenuTabId)) {
+        updatedPinnedTabs.push(contextMenuTabId);
+      }
+
+      // Оновлюємо закріплені таби
+      setPinnedTabs(updatedPinnedTabs);
+
+      // Закриваємо контекстне меню після кліку
+      setShowContextMenu(false);
+    }
+  };
+
+
+
+
 
   const updateTabsVisibility = () => {
     if (tabsContainerRef.current) {
       const containerWidth = tabsContainerRef.current.offsetWidth;
-      const tabWidth = 115; 
+      const tabWidth = 115;
       const visibleTabsCount = Math.floor(containerWidth / tabWidth);
 
       const visibleTabs = tabsData.slice(0, visibleTabsCount);
@@ -65,11 +104,11 @@ export default function Home() {
   };
 
   useEffect(() => {
-    updateTabsVisibility(); 
-    window.addEventListener("resize", updateTabsVisibility); 
+    updateTabsVisibility();
+    window.addEventListener("resize", updateTabsVisibility);
 
     return () => {
-      window.removeEventListener("resize", updateTabsVisibility); 
+      window.removeEventListener("resize", updateTabsVisibility);
     };
   }, []);
 
@@ -78,37 +117,61 @@ export default function Home() {
       <div className="w-1/12 bg-white"></div>
       <div className="w-11/12 flex flex-col relative">
         <div className="h-[69px] bg-white ml-0.5 mb-0.5"></div>
-        <div
-          ref={tabsContainerRef}
-          className="flex overflow-x-auto space-x-0.5 items-center"
-        >
-          {tabsData.map((tab) => {
-            const isVisible = tabsToShow.includes(tab.id);
-            return (
-              <div
-                key={tab.id}
-                className={`flex items-center p-2.5 min-w-fit ${activeTab === tab.id
-                  ? "bg-gray-100 text-black border-t-4 rounded-e-xs rounded-l-xs border-solid border-blue-500"
-                  : "bg-white text-gray-500"
-                  } ${activeTab !== tab.id
-                    ? "hover:bg-gray-100 hover:text-black hover:border-t-4 hover:rounded-e-xs hover:rounded-l-xs hover:border-solid hover:border-gray-500"
-                    : ""
-                  }`}
-                onClick={() => handleTabClick(tab.id, tab.url)}
-                style={{ display: isVisible ? "flex" : "none" }}
-              >
-                <Image src={tab.icon} alt={tab.name} width={16} height={16} />
-                {tab.id !== 1 && (
-                  <span className="ml-2">{tab.name}</span>
-                )}
-              </div>
-            );
-          })}
+        <div ref={tabsContainerRef} className="flex overflow-x-auto space-x-0.5 ">
+          {tabsData
+            .filter((tab) => pinnedTabs.includes(tab.id)) // Фільтруємо закріплені таби
+            .concat(tabsData.filter((tab) => !pinnedTabs.includes(tab.id))) // Додаємо інші таби
+            .map((tab) => {
+              const isVisible = tabsToShow.includes(tab.id);
+              const isPinned = pinnedTabs.includes(tab.id); // Перевірка на закріплений таб
+
+              return (
+                <div
+                  key={tab.id}
+                  className={`flex items-center p-2.5 min-w-fit ${activeTab === tab.id
+                      ? "bg-gray-100 text-black border-t-4 rounded-e-xs rounded-l-xs border-solid border-blue-500"
+                      : "bg-white text-gray-500"
+                    } ${isPinned ? "h-12 border-t-4 rounded-e-xs rounded-l-xs border-solid border-gray-500" : ""} ${activeTab !== tab.id
+                      ? "hover:bg-gray-100 hover:text-black "
+                      : ""
+                    }`}
+                  onClick={() => handleTabClick(tab.id, tab.url)}
+                  onContextMenu={(e) => handleRightClick(e, tab.id)} // Обробляємо правий клік
+                  style={{ display: isVisible ? "flex" : "none" }}
+                >
+                  {isPinned ? (
+                    <Image src={tab.icon} alt={tab.name} width={16} height={16} />
+                  ) : (
+                    <>
+                      <Image src={tab.icon} alt={tab.name} width={16} height={16} />
+                      <span className="ml-2">{tab.name}</span>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+
+
         </div>
 
 
+        {showContextMenu && contextMenuTabId !== null && (
+  <div
+    className="absolute p-2 bg-white border border-gray-300 rounded-md shadow-lg"
+    style={{
+      top: `${contextMenuPosition.top + 10}px`, // додаємо невеликий відступ вниз
+      left: `${contextMenuPosition.left - 140}px`, // додаємо невеликий відступ вправо
+    }}
+  >
+    <button onClick={handlePinTab} className="flex justify-center">
+      <Image src={Pinn} alt="Arrow Up" width={15} height={15} className="mr-1" />
+      Tab anpinnen
+    </button>
+  </div>
+)}
+
         <div
-          className={`p-2.5 min-w-fit h-11 absolute right-0 top-[95px] transform -translate-y-1/2 cursor-pointer bg-white z-10 flex justify-center ${showDropdown ? 'bg-blue-500' : 'bg-white'}`}
+          className={`p-2.5 min-w-fit h-12 absolute right-0 top-[95px] transform -translate-y-1/2 cursor-pointer z-10 flex justify-center ${showDropdown ? 'bg-blue-500' : 'bg-white'}`}
           onClick={() => setShowDropdown((prev) => !prev)}
         >
           {showDropdown ? (
@@ -117,7 +180,6 @@ export default function Home() {
             <Image src={ArrowDown} alt="Arrow Down" width={10} height={6} />
           )}
         </div>
-
 
         {showDropdown && (
           <div className="absolute right-0 top-28 w-[225px] bg-white border-2 border-gray-300 rounded-xl shadow-lg z-50 overflow-auto">
@@ -138,7 +200,6 @@ export default function Home() {
               ))}
           </div>
         )}
-
 
         <div className="w-full h-[80vh] bg-white mt-4 ml-4 border-gray-300/20 rounded-xl border-2"></div>
       </div>
