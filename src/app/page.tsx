@@ -43,19 +43,19 @@ export default function Home() {
   const router = useRouter();
 
   const initialTabsData = [
-    { id: 1, name: "Lagerverwaltung", icon: <Icon1 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Lagerverwaltung" },
-    { id: 2, name: "Dashboard", icon: <Icon2 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Dashboard" },
-    { id: 3, name: "Banking", icon: <Icon3 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Banking" },
-    { id: 4, name: "Telefonie", icon: <Icon4 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Telefonie" },
-    { id: 5, name: "Accounting", icon: <Icon5 className="w-4 h-4 text-gray-500 fill-gray-500 hover:fill-black hover:text-black" />, url: "/Accounting" },
-    { id: 6, name: "Verkauf", icon: <Icon6 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Verkauf" },
-    { id: 7, name: "Statistik", icon: <Icon7 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Statistik" },
-    { id: 8, name: "Post Office", icon: <Icon8 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Post-Office" },
-    { id: 9, name: "Administration", icon: <Icon9 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Administration" },
-    { id: 10, name: "Help", icon: <Icon10 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Help" },
-    { id: 11, name: "Warenbestand", icon: <Icon11 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Warenbestand" },
-    { id: 12, name: "Auswahllisten", icon: <Icon12 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Auswahllisten" },
-    { id: 13, name: "Einkauf", icon: <Icon13 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Einkauf" },
+    { id: 1, name: "Lagerverwaltung", icon: <Icon1 className="w-4 h-4  " />, url: "/Lagerverwaltung" },
+    { id: 2, name: "Dashboard", icon: <Icon2 className="w-4 h-4  " />, url: "/Dashboard" },
+    { id: 3, name: "Banking", icon: <Icon3 className="w-4 h-4  " />, url: "/Banking" },
+    { id: 4, name: "Telefonie", icon: <Icon4 className="w-4 h-4 " />, url: "/Telefonie" },
+    { id: 5, name: "Accounting", icon: <Icon5 className="w-4 h-4 " />, url: "/Accounting" },
+    { id: 6, name: "Verkauf", icon: <Icon6 className="w-4 h-4 " />, url: "/Verkauf" },
+    { id: 7, name: "Statistik", icon: <Icon7 className="w-4 h-4 " />, url: "/Statistik" },
+    { id: 8, name: "Post Office", icon: <Icon8 className="w-4 h-4 " />, url: "/Post-Office" },
+    { id: 9, name: "Administration", icon: <Icon9 className="w-4 h-4 " />, url: "/Administration" },
+    { id: 10, name: "Help", icon: <Icon10 className="w-4 h-4 " />, url: "/Help" },
+    { id: 11, name: "Warenbestand", icon: <Icon11 className="w-4 h-4 " />, url: "/Warenbestand" },
+    { id: 12, name: "Auswahllisten", icon: <Icon12 className="w-4 h-4 " />, url: "/Auswahllisten" },
+    { id: 13, name: "Einkauf", icon: <Icon13 className="w-4 h-4 " />, url: "/Einkauf" },
   ];
 
   const [tabsData, setTabsData] = useState(initialTabsData);
@@ -65,8 +65,8 @@ export default function Home() {
       setTooltip({
         name: tab.name,
         icon: tab.icon,
-        x: clientX + 10, // додаємо відступ, щоб підказка не накладалась на мишку
-        y: clientY + 10, // додаємо відступ
+        x: clientX + 10,
+        y: clientY + 10,
       });
     }
   };
@@ -74,7 +74,7 @@ export default function Home() {
 
 
   const handleMouseLeave = () => {
-    setTooltip(null); // приховуємо підказку
+    setTooltip(null);
   };
 
   useEffect(() => {
@@ -85,19 +85,19 @@ export default function Home() {
       const parsedTabsOrder = JSON.parse(savedTabsOrder);
       const orderedTabs = parsedTabsOrder.map((tab: { id: number }) =>
         tabsData.find((tabData) => tabData.id === tab.id)
-      ).filter(Boolean); // Перевірка на null/undefined
+      ).filter(Boolean);
       setTabsData(orderedTabs);
     } else {
-      // Якщо немає збережених даних, використовуємо дефолтні
-      setTabsData(initialTabsData);  // Встановлюємо початкові дані для табів
+
+      setTabsData(initialTabsData);
     }
 
     if (savedPinnedTabs) {
       const parsedPinnedTabs = JSON.parse(savedPinnedTabs);
-      setPinnedTabs(parsedPinnedTabs);  // Відновлюємо закріплені таби
+      setPinnedTabs(parsedPinnedTabs);
     } else {
-      // Якщо немає збережених закріплених табів, використовуємо дефолтні
-      setPinnedTabs([1]);  // Початкові закріплені таби
+
+      setPinnedTabs([1]);
     }
   }, []);
 
@@ -105,17 +105,17 @@ export default function Home() {
 
   useEffect(() => {
     const tabsOrder = tabsData.map(tab => ({ id: tab.id, name: tab.name }));
-    const pinnedTabsOrder = pinnedTabs;  // Зберігаємо також закріплені таби
+    const pinnedTabsOrder = pinnedTabs;
     localStorage.setItem("tabsOrder", JSON.stringify(tabsOrder));
-    localStorage.setItem("pinnedTabs", JSON.stringify(pinnedTabsOrder)); // Зберігаємо закріплені таби
+    localStorage.setItem("pinnedTabs", JSON.stringify(pinnedTabsOrder));
   }, [tabsData, pinnedTabs]);
   const handleResetTabs = () => {
-    localStorage.removeItem("tabsOrder");  // Очистити порядок табів
-    localStorage.removeItem("pinnedTabs"); // Очистити закріплені таби
+    localStorage.removeItem("tabsOrder");
+    localStorage.removeItem("pinnedTabs");
 
-    // Встановлюємо дефолтні значення
+
     setTabsData(initialTabsData);
-    setPinnedTabs([1]);  // Початкові закріплені таби
+    setPinnedTabs([1]);
   };
 
 
@@ -123,12 +123,12 @@ export default function Home() {
     setActiveTab(id);
     router.push(url);
 
-    // Знаходимо елемент таба і прокручуємо його в видиму частину
+
     const tabElement = document.getElementById(`tab-${id}`);
     if (tabElement) {
       tabElement.scrollIntoView({
-        behavior: "smooth",  // Для плавного прокручування
-        block: "nearest",    // Щоб елемент потрапив у видиму частину
+        behavior: "smooth",
+        block: "nearest",
       });
     }
   };
@@ -175,7 +175,7 @@ export default function Home() {
       const draggingIndex = newTabsData.findIndex(tab => tab.id === draggingTabId);
       const dropIndex = newTabsData.findIndex(tab => tab.id === tabId);
 
-      // Переміщаємо таби
+
       const [draggedTab] = newTabsData.splice(draggingIndex, 1);
       newTabsData.splice(dropIndex, 0, draggedTab);
 
@@ -210,8 +210,8 @@ export default function Home() {
   }, []);
 
   const handleDeleteTab = (tabId: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    e.stopPropagation(); // зупиняємо поширення події
-    setTabsData((prevTabs) => prevTabs.filter((tab) => tab.id !== tabId)); // видаляємо вкладку за id
+    e.stopPropagation();
+    setTabsData((prevTabs) => prevTabs.filter((tab) => tab.id !== tabId));
   };
 
   return (
@@ -237,7 +237,7 @@ export default function Home() {
                     } ${isPinned ? "h-12 border-t-4 rounded-e-xs rounded-l-xs border-solid border-gray-500" : ""} ${activeTab !== tab.id
                       ? "hover:bg-gray-100 hover:fill-black hover:text-black"
                       : ""
-                    } ${draggingTabId === tab.id ? "opacity-20 "  : ""} relative `}
+                    } ${draggingTabId === tab.id ? "opacity-20 " : ""} relative `}
                   onClick={() => handleTabClick(tab.id, tab.url)}
                   onContextMenu={(e) => handleRightClick(e, tab.id)}
                   onMouseEnter={(e) => handleMouseEnter(e, tab)}
@@ -299,7 +299,7 @@ export default function Home() {
             style={{
               top: `${tooltip.y - 5}px`,
               left: `${tooltip.x - 140}px`,
-              zIndex: 10, // щоб блок був вище інших елементів
+              zIndex: 10,
             }}
           >
             <div className="flex items-center space-x-2">
