@@ -4,10 +4,15 @@
   --font-poppins: 'Poppins', sans-serif;
 }
 
-@theme inline {
-  --font-sans: var(--font-poppins);
-}
 
 body {
   font-family: var(--font-poppins), sans-serif;
+}
+
+::-webkit-scrollbar {
+  height: 7px; 
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(127, 133, 141, 0.4); 
+  border-radius: 4px; 
 }

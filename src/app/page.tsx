@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import React from 'react';
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -18,52 +19,128 @@ import Icon13 from "./image/icon13.svg";
 import Pinn from "./image/Pinn.svg";
 import ArrowUp from "./image/Arrow_up.svg";
 import ArrowDown from "./image/Arrow_down.svg";
+import DeleteTab from "./image/deleteTab.svg"
+import DeleteTabList from "./image/deleteTabList.svg"
+
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState(2);
   const [showDropdown, setShowDropdown] = useState(false);
   const [tabsToShow, setTabsToShow] = useState<number[]>([]);
   const [extraTabs, setExtraTabs] = useState<number[]>([]);
-  const [pinnedTabs, setPinnedTabs] = useState<number[]>([1]); // Початково закріплюємо перший таб
+  const [pinnedTabs, setPinnedTabs] = useState<number[]>([1]);
   const [showContextMenu, setShowContextMenu] = useState<boolean>(false);
   const [contextMenuTabId, setContextMenuTabId] = useState<number | null>(null);
   const [contextMenuPosition, setContextMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [draggingTabId, setDraggingTabId] = useState<number | null>(null);
+  const [dragOverTabId, setDragOverTabId] = useState<number | null>(null);
+  const [tooltip, setTooltip] = useState<{ name: string; icon: React.ReactNode; x: number; y: number } | null>(null);
+
+
 
   const tabsContainerRef = useRef<HTMLDivElement | null>(null);
 
   const router = useRouter();
 
-  const [tabsData, setTabsData] = useState([
-    { id: 1, name: 'Lagerverwaltung', icon: Icon1, url: '/Lagerverwaltung' },
-    { id: 2, name: 'Dashboard', icon: Icon2, url: '/Dashboard' },
-    { id: 3, name: 'Banking', icon: Icon3, url: '/Banking' },
-    { id: 4, name: 'Telefonie', icon: Icon4, url: '/Telefonie' },
-    { id: 5, name: 'Accounting', icon: Icon5, url: '/Accounting' },
-    { id: 6, name: 'Verkauf', icon: Icon6, url: '/Verkauf' },
-    { id: 7, name: 'Statistik', icon: Icon7, url: '/Statistik' },
-    { id: 8, name: 'Post Office', icon: Icon8, url: '/Post-Office' },
-    { id: 9, name: 'Administration', icon: Icon9, url: '/Administration' },
-    { id: 10, name: 'Help', icon: Icon10, url: '/Help' },
-    { id: 11, name: 'Warenbestand', icon: Icon11, url: '/Warenbestand' },
-    { id: 12, name: 'Auswahllisten', icon: Icon12, url: '/Auswahllisten' },
-    { id: 13, name: 'Einkauf', icon: Icon13, url: '/Einkauf' },
-  ]);
+  const initialTabsData = [
+    { id: 1, name: "Lagerverwaltung", icon: <Icon1 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Lagerverwaltung" },
+    { id: 2, name: "Dashboard", icon: <Icon2 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Dashboard" },
+    { id: 3, name: "Banking", icon: <Icon3 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Banking" },
+    { id: 4, name: "Telefonie", icon: <Icon4 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Telefonie" },
+    { id: 5, name: "Accounting", icon: <Icon5 className="w-4 h-4 text-gray-500 fill-gray-500 hover:fill-black hover:text-black" />, url: "/Accounting" },
+    { id: 6, name: "Verkauf", icon: <Icon6 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Verkauf" },
+    { id: 7, name: "Statistik", icon: <Icon7 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Statistik" },
+    { id: 8, name: "Post Office", icon: <Icon8 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Post-Office" },
+    { id: 9, name: "Administration", icon: <Icon9 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Administration" },
+    { id: 10, name: "Help", icon: <Icon10 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Help" },
+    { id: 11, name: "Warenbestand", icon: <Icon11 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Warenbestand" },
+    { id: 12, name: "Auswahllisten", icon: <Icon12 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Auswahllisten" },
+    { id: 13, name: "Einkauf", icon: <Icon13 className="w-4 h-4 text-gray-500 hover:text-black transition-colors duration-200" />, url: "/Einkauf" },
+  ];
+
+  const [tabsData, setTabsData] = useState(initialTabsData);
+  const handleMouseEnter = (e: React.MouseEvent, tab: { id: number; name: string; icon: React.ReactNode }) => {
+    if (pinnedTabs.includes(tab.id)) {
+      const { clientX, clientY } = e;
+      setTooltip({
+        name: tab.name,
+        icon: tab.icon,
+        x: clientX + 10, // додаємо відступ, щоб підказка не накладалась на мишку
+        y: clientY + 10, // додаємо відступ
+      });
+    }
+  };
+
+
+
+  const handleMouseLeave = () => {
+    setTooltip(null); // приховуємо підказку
+  };
+
+  useEffect(() => {
+    const savedTabsOrder = localStorage.getItem("tabsOrder");
+    const savedPinnedTabs = localStorage.getItem("pinnedTabs");
+
+    if (savedTabsOrder) {
+      const parsedTabsOrder = JSON.parse(savedTabsOrder);
+      const orderedTabs = parsedTabsOrder.map((tab: { id: number }) =>
+        tabsData.find((tabData) => tabData.id === tab.id)
+      ).filter(Boolean); // Перевірка на null/undefined
+      setTabsData(orderedTabs);
+    } else {
+      // Якщо немає збережених даних, використовуємо дефолтні
+      setTabsData(initialTabsData);  // Встановлюємо початкові дані для табів
+    }
+
+    if (savedPinnedTabs) {
+      const parsedPinnedTabs = JSON.parse(savedPinnedTabs);
+      setPinnedTabs(parsedPinnedTabs);  // Відновлюємо закріплені таби
+    } else {
+      // Якщо немає збережених закріплених табів, використовуємо дефолтні
+      setPinnedTabs([1]);  // Початкові закріплені таби
+    }
+  }, []);
+
+
+
+  useEffect(() => {
+    const tabsOrder = tabsData.map(tab => ({ id: tab.id, name: tab.name }));
+    const pinnedTabsOrder = pinnedTabs;  // Зберігаємо також закріплені таби
+    localStorage.setItem("tabsOrder", JSON.stringify(tabsOrder));
+    localStorage.setItem("pinnedTabs", JSON.stringify(pinnedTabsOrder)); // Зберігаємо закріплені таби
+  }, [tabsData, pinnedTabs]);
+  const handleResetTabs = () => {
+    localStorage.removeItem("tabsOrder");  // Очистити порядок табів
+    localStorage.removeItem("pinnedTabs"); // Очистити закріплені таби
+
+    // Встановлюємо дефолтні значення
+    setTabsData(initialTabsData);
+    setPinnedTabs([1]);  // Початкові закріплені таби
+  };
 
 
   const handleTabClick = (id: number, url: string) => {
     setActiveTab(id);
     router.push(url);
+
+    // Знаходимо елемент таба і прокручуємо його в видиму частину
+    const tabElement = document.getElementById(`tab-${id}`);
+    if (tabElement) {
+      tabElement.scrollIntoView({
+        behavior: "smooth",  // Для плавного прокручування
+        block: "nearest",    // Щоб елемент потрапив у видиму частину
+      });
+    }
   };
+
 
   const handleRightClick = (e: React.MouseEvent, tabId: number) => {
     e.preventDefault();
     setContextMenuTabId(tabId);
     setShowContextMenu(true);
 
-
     const mouseEvent = e.nativeEvent as MouseEvent;
     const { clientX, clientY } = mouseEvent;
-
 
     setContextMenuPosition({ top: clientY, left: clientX });
   };
@@ -72,22 +149,42 @@ export default function Home() {
     if (contextMenuTabId !== null) {
       const updatedPinnedTabs = [...pinnedTabs];
 
-      // Додаємо таб до закріплених, якщо його ще немає
       if (!updatedPinnedTabs.includes(contextMenuTabId)) {
         updatedPinnedTabs.push(contextMenuTabId);
       }
 
-      // Оновлюємо закріплені таби
       setPinnedTabs(updatedPinnedTabs);
-
-      // Закриваємо контекстне меню після кліку
       setShowContextMenu(false);
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, tabId: number) => {
+    setDraggingTabId(tabId);
+  };
 
+  const handleDragOver = (e: React.DragEvent, tabId: number) => {
+    e.preventDefault();
+    setDragOverTabId(tabId);
+  };
 
+  const handleDrop = (e: React.DragEvent, tabId: number) => {
+    e.preventDefault();
 
+    if (draggingTabId && dragOverTabId && draggingTabId !== dragOverTabId) {
+      const newTabsData = [...tabsData];
+      const draggingIndex = newTabsData.findIndex(tab => tab.id === draggingTabId);
+      const dropIndex = newTabsData.findIndex(tab => tab.id === tabId);
+
+      // Переміщаємо таби
+      const [draggedTab] = newTabsData.splice(draggingIndex, 1);
+      newTabsData.splice(dropIndex, 0, draggedTab);
+
+      setTabsData(newTabsData);
+    }
+
+    setDraggingTabId(null);
+    setDragOverTabId(null);
+  };
 
   const updateTabsVisibility = () => {
     if (tabsContainerRef.current) {
@@ -112,75 +209,105 @@ export default function Home() {
     };
   }, []);
 
+  const handleDeleteTab = (tabId: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    e.stopPropagation(); // зупиняємо поширення події
+    setTabsData((prevTabs) => prevTabs.filter((tab) => tab.id !== tabId)); // видаляємо вкладку за id
+  };
+
   return (
     <div className="flex w-full">
-      <div className="w-1/12 bg-white"></div>
+      <div className="hidden lg:block w-1/12 bg-white"></div>
       <div className="w-11/12 flex flex-col relative">
         <div className="h-[69px] bg-white ml-0.5 mb-0.5"></div>
-        <div ref={tabsContainerRef} className="flex overflow-x-auto space-x-0.5 ">
+        <div ref={tabsContainerRef} className="flex overflow-x-auto space-x-0.5">
           {tabsData
-            .filter((tab) => pinnedTabs.includes(tab.id)) // Фільтруємо закріплені таби
-            .concat(tabsData.filter((tab) => !pinnedTabs.includes(tab.id))) // Додаємо інші таби
+            .filter((tab) => pinnedTabs.includes(tab.id))
+            .concat(tabsData.filter((tab) => !pinnedTabs.includes(tab.id)))
             .map((tab) => {
               const isVisible = tabsToShow.includes(tab.id);
-              const isPinned = pinnedTabs.includes(tab.id); // Перевірка на закріплений таб
+              const isPinned = pinnedTabs.includes(tab.id);
 
               return (
                 <div
                   key={tab.id}
-                  className={`flex items-center p-2.5 min-w-fit ${activeTab === tab.id
-                      ? "bg-gray-100 text-black border-t-4 rounded-e-xs rounded-l-xs border-solid border-blue-500"
-                      : "bg-white text-gray-500"
+                  id={`tab-${tab.id}`}
+                  className={`flex items-center p-2.5 min-w-fit cursor-pointer ${activeTab === tab.id
+                    ? "bg-gray-100 text-black border-t-4 rounded-e-xs rounded-l-xs border-solid border-blue-500"
+                    : "bg-white text-gray-500"
                     } ${isPinned ? "h-12 border-t-4 rounded-e-xs rounded-l-xs border-solid border-gray-500" : ""} ${activeTab !== tab.id
-                      ? "hover:bg-gray-100 hover:text-black "
+                      ? "hover:bg-gray-100 hover:fill-black hover:text-black"
                       : ""
-                    }`}
+                    } ${draggingTabId === tab.id ? "opacity-20 "  : ""} relative `}
                   onClick={() => handleTabClick(tab.id, tab.url)}
-                  onContextMenu={(e) => handleRightClick(e, tab.id)} // Обробляємо правий клік
-                  style={{ display: isVisible ? "flex" : "none" }}
+                  onContextMenu={(e) => handleRightClick(e, tab.id)}
+                  onMouseEnter={(e) => handleMouseEnter(e, tab)}
+                  onMouseLeave={handleMouseLeave}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, tab.id)}
+                  onDragOver={(e) => handleDragOver(e, tab.id)}
+                  onDrop={(e) => handleDrop(e, tab.id)}
+
                 >
                   {isPinned ? (
-                    <Image src={tab.icon} alt={tab.name} width={16} height={16} />
+                    <>{tab.icon}</>
                   ) : (
                     <>
-                      <Image src={tab.icon} alt={tab.name} width={16} height={16} />
-                      <span className="ml-2">{tab.name}</span>
+                      {tab.icon}
+                      <span className="ml-2 mr-4">{tab.name}</span>
+                      <DeleteTab
+                        onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleDeleteTab(tab.id, e)}
+                        className="w-4 h-4 mr-2 cursor-pointer opacity-0 transition-opacity duration-300 absolute right-0 top-1/2 transform -translate-y-1/2 hover:opacity-100"
+                      />
                     </>
                   )}
+
+
                 </div>
               );
             })}
 
-
         </div>
 
-
         {showContextMenu && contextMenuTabId !== null && (
-  <div
-    className="absolute p-2 bg-white border border-gray-300 rounded-md shadow-lg"
-    style={{
-      top: `${contextMenuPosition.top + 10}px`, // додаємо невеликий відступ вниз
-      left: `${contextMenuPosition.left - 140}px`, // додаємо невеликий відступ вправо
-    }}
-  >
-    <button onClick={handlePinTab} className="flex justify-center">
-      <Image src={Pinn} alt="Arrow Up" width={15} height={15} className="mr-1" />
-      Tab anpinnen
-    </button>
-  </div>
-)}
+          <div
+            className="absolute p-2 bg-white border border-gray-300 rounded-md shadow-lg"
+            style={{
+              top: `${contextMenuPosition.top + 10}px`,
+              left: `${contextMenuPosition.left - 140}px`,
+            }}
+          >
+            <button onClick={handlePinTab} className="flex justify-center text-gray-500 cursor-pointer">
+              <Pinn className="w-4 h-4 mr-2" />
+              Tab anpinnen
+            </button>
+          </div>
+        )}
 
         <div
-          className={`p-2.5 min-w-fit h-12 absolute right-0 top-[95px] transform -translate-y-1/2 cursor-pointer z-10 flex justify-center ${showDropdown ? 'bg-blue-500' : 'bg-white'}`}
+          className={`p-2.5 min-w-fit h-12 absolute right-0 top-[95px] transform -translate-y-1/2 cursor-pointer z-10 flex justify-center items-center ${showDropdown ? 'bg-blue-500' : 'bg-white'}`}
           onClick={() => setShowDropdown((prev) => !prev)}
         >
           {showDropdown ? (
-            <Image src={ArrowUp} alt="Arrow Up" width={10} height={6} />
+            <ArrowUp className="w-2.5 h-2.5" />
           ) : (
-            <Image src={ArrowDown} alt="Arrow Down" width={10} height={6} />
+            <ArrowDown className="w-2.5 h-2.5" />
           )}
         </div>
-
+        {tooltip && (
+          <div
+            className="absolute bg-white p-2 shadow-lg rounded-md border border-gray-300"
+            style={{
+              top: `${tooltip.y - 5}px`,
+              left: `${tooltip.x - 140}px`,
+              zIndex: 10, // щоб блок був вище інших елементів
+            }}
+          >
+            <div className="flex items-center space-x-2">
+              {tooltip.icon}
+              <span>{tooltip.name}</span>
+            </div>
+          </div>
+        )}
         {showDropdown && (
           <div className="absolute right-0 top-28 w-[225px] bg-white border-2 border-gray-300 rounded-xl shadow-lg z-50 overflow-auto">
             {tabsData
@@ -188,21 +315,26 @@ export default function Home() {
               .map((tab) => (
                 <div
                   key={tab.id}
-                  className={`flex items-center p-2.5 min-w-fit ${activeTab === tab.id
+                  className={`flex items-center p-2.5 min-w-fit border-b-2 border-b-gray-100 ${activeTab === tab.id
                     ? "bg-gray-100 text-black border-t-4 rounded-e-xs rounded-l-xs border-solid border-blue-500"
                     : "bg-white text-gray-500"
                     }`}
                   onClick={() => handleTabClick(tab.id, tab.url)}
                 >
-                  <Image src={tab.icon} alt={tab.name} width={16} height={16} />
-                  <span className="ml-2">{tab.name}</span>
+                  {tab.icon}
+                  <span className="w-44 ml-2 flex justify-between items-start">{tab.name}  <DeleteTabList
+                    onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleDeleteTab(tab.id, e)}
+                    className="w-4 ml-6 h-4 cursor-pointer"
+                  /></span>
                 </div>
               ))}
           </div>
         )}
 
-        <div className="w-full h-[80vh] bg-white mt-4 ml-4 border-gray-300/20 rounded-xl border-2"></div>
+        <div className="w-full h-[80vh] bg-white  border-gray-300/20 rounded-xl border-2 flex justify-end items-end"><button className=" w-10 h-10 rounded-4xl  bg-blue-500" onClick={handleResetTabs}></button>
+        </div>
       </div>
+
     </div>
   );
 }
